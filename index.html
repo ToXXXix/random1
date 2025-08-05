@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickFixU - Your AI Home Assistant</title>
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.7;
+        }
+
+        .chat-nav-button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .chat-nav-button:hover {
+            transform: scale(1.05);
+        }
+
+        .user-status {
+            color: white;
+            font-size: 0.9rem;
+            margin-left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .login-button, .logout-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-button {
+            background: rgba(255, 107, 107, 0.7);
+            border-color: rgba(255, 107, 107, 0.5);
+        }
+
+        .login-button:hover, .logout-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        main {
+            margin-top: 80px;
+            padding: 2rem 0;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 0.2s forwards;
+            color: #e0f7ff;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 0.4s forwards;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 0.6s forwards;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .cta-button.secondary {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .problem-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .category-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            transition: transform 0.3s ease, background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .category-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .category-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-card p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+
+        .chatbot-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin: 4rem 0;
+            padding: 3rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .chatbot-section h2 {
+            color: #2193b0;
+            margin-bottom: 1rem;
+            font-size: 2.2rem;
+        }
+
+        .chatbot-placeholder {
+            border: 3px dashed #2193b0;
+            border-radius: 15px;
+            padding: 3rem;
+            margin: 2rem 0;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chatbot-placeholder::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        .chatbot-icon {
+            font-size: 4rem;
+            color: #2193b0;
+            margin-bottom: 1rem;
+        }
+
+        .features-section {
+            margin: 6rem 0;
+            padding: 4rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+        }
+
+        .features-section h2 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin: 3rem 0;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+        }
+
+        .feature-item .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .testimonials {
+            margin: 6rem 0;
+            text-align: center;
+        }
+
+        .testimonials h2 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .testimonial-card .quote {
+            font-style: italic;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .testimonial-card .author {
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        .how-it-works {
+            margin: 6rem 0;
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            color: white;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .floating-chat-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(45deg, #2193b0, #6dd5ed);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(33, 147, 176, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 35px rgba(33, 147, 176, 0.5);
+        }
+
+        .floating-chat-button::before {
+            content: '🛠️';
+        }
+
+        footer {
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 3rem 0;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #6dd5ed;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            opacity: 1;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Auth Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: #2193b0;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2193b0;
+        }
+
+        .form-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #2193b0, #6dd5ed);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .form-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .problem-categories {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .modal-content {
+                padding: 30px 20px;
+            }
+
+            .user-status {
+                font-size: 0.8rem;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">🔧 QuickFixU</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#problems">Problems</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#chatbot" class="chat-nav-button">💬 Ask AI Helper</a></li>
+            </ul>
+            <div id="userStatus" class="user-status">
+                <button id="authButton" class="login-button">Sign In</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero" id="home">
+            <h1>Get Any Home Problem Fixed</h1>
+            <p class="hero-subtitle">Your AI-Powered Home Repair Assistant</p>
+            <p>Living on your own for the first time? Don't panic when things break! From leaky faucets to car troubles, tech glitches to cleaning disasters - our AI assistant has step-by-step solutions for every household problem you'll face.</p>
+            
+            <div class="cta-buttons">
+                <a href="#chatbot" class="cta-button" onclick="openChatbot(); return false;">Get Help Now</a>
+                <a href="#problems" class="cta-button secondary">Browse Problems</a>
+            </div>
+        </section>
+
+        <section class="chatbot-section" id="chatbot">
+            <h2>🤖 AI Home Helper</h2>
+            <p>Get instant solutions to any household problem - just describe what's wrong!</p>
+            
+            <div class="chatbot-placeholder">
+                <div class="chatbot-icon">🛠️</div>
+                <h3>AI Assistant Integration Area</h3>
+                <p><strong>Ready to connect with ChatGPT!</strong></p>
+                <p id="chatbotStatus">🔐 Please sign in to start chatting with our AI assistant</p>
+                <div style="text-align: left; max-width: 600px; margin: 1rem auto; background: rgba(255, 255, 255, 0.1); padding: 1rem; border-radius: 10px;">
+                    <p>💧 "My toilet won't stop running"</p>
+                    <p>🚗 "My car won't start in the morning"</p>
+                    <p>💻 "My WiFi keeps disconnecting"</p>
+                    <p>🧽 "How do I remove this stain?"</p>
+                    <p>🔧 "My kitchen sink is clogged"</p>
+                </div>
+                <button id="testChatButton" class="form-button" style="max-width: 300px; margin: 20px auto; display: none;">
+                    🧪 Test Database Connection
+                </button>
+            </div>
+        </section>
+
+        <section class="problem-categories" id="problems">
+            <div class="category-card" onclick="selectCategory(1, 'Plumbing Problems')">
+                <span class="category-icon">🔧</span>
+                <h3>Plumbing Problems</h3>
+                <p>Clogged drains, leaky faucets, toilet issues, low water pressure, pipe problems, and emergency water shut-offs</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(2, 'Car Troubles')">
+                <span class="category-icon">🚗</span>
+                <h3>Car Troubles</h3>
+                <p>Won't start, flat tires, dead battery, oil changes, brake issues, engine problems, and basic maintenance</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(3, 'Kitchen Fixes')">
+                <span class="category-icon">🍳</span>
+                <h3>Kitchen Fixes</h3>
+                <p>Broken appliances, oven issues, refrigerator problems, dishwasher troubles, and cooking equipment repairs</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(4, 'Tech Problems')">
+                <span class="category-icon">💻</span>
+                <h3>Tech Problems</h3>
+                <p>WiFi issues, computer crashes, phone problems, TV setup, smart home devices, and software troubleshooting</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(5, 'Cleaning Issues')">
+                <span class="category-icon">🧽</span>
+                <h3>Cleaning Issues</h3>
+                <p>Tough stains, mold removal, deep cleaning, laundry problems, carpet care, and bathroom maintenance</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(6, 'Electrical Problems')">
+                <span class="category-icon">⚡</span>
+                <h3>Electrical Problems</h3>
+                <p>Power outages, blown fuses, faulty outlets, light fixtures, extension cord safety, and basic wiring</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(7, 'General Home Repairs')">
+                <span class="category-icon">🏠</span>
+                <h3>General Home Repairs</h3>
+                <p>Wall holes, door problems, window issues, furniture assembly, painting, and basic handyman tasks</p>
+            </div>
+
+            <div class="category-card" onclick="selectCategory(8, 'HVAC & Temperature')">
+                <span class="category-icon">❄️</span>
+                <h3>HVAC & Temperature</h3>
+                <p>Heating problems, AC issues, thermostat settings, air filter changes, and energy efficiency tips</p>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="container">
+                <h2>Why Students Choose QuickFixU</h2>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">💰</div>
+                        <h3>Save Money</h3>
+                        <p>Avoid expensive repair calls by learning to fix simple problems yourself with our step-by-step guidance</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Instant Solutions</h3>
+                        <p>Get immediate help 24/7 - no waiting for repair services or searching through endless forums</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🎓</div>
+                        <h3>Learn Life Skills</h3>
+                        <p>Build confidence and independence by mastering essential home maintenance and repair skills</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📱</div>
+                        <h3>Easy to Use</h3>
+                        <p>Simple chat interface - just describe your problem in plain English and get personalized solutions</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🛡️</div>
+                        <h3>Safety First</h3>
+                        <p>Clear warnings about when to DIY and when to call professionals - your safety is our priority</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📚</div>
+                        <h3>Complete Guides</h3>
+                        <p>Detailed instructions with tool lists, material costs, and difficulty ratings for every repair</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works" id="how-it-works">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Describe Your Problem</h3>
+                    <p>Tell our AI what's broken, not working, or needs fixing in your own words</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Get Instant Diagnosis</h3>
+                    <p>Our AI analyzes your issue and provides a clear explanation of what's wrong</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Follow Step-by-Step Solution</h3>
+                    <p>Receive detailed instructions, tool lists, and safety tips to fix it yourself</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Problem Solved!</h3>
+                    <p>Save money, gain confidence, and become more independent in your new home</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="testimonials">
+            <h2>What Students Say</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial-card">
+                    <p class="quote">"Saved me $200 on a plumber! The AI walked me through fixing my clogged drain step by step. So helpful for a broke college student!"</p>
+                    <p class="author">- Sarah, College Freshman</p>
+                </div>
+                <div class="testimonial-card">
+                    <p class="quote">"My car wouldn't start before an important job interview. QuickFixU helped me diagnose a dead battery and get back on the road in 20 minutes!"</p>
+                    <p class="author">- Mike, Graduate Student</p>
+                </div>
+                <div class="testimonial-card">
+                    <p class="quote">"Living alone was scary until I found this. Now I feel confident handling basic repairs and maintenance. It's like having a handy friend on call!"</p>
+                    <p class="author">- Jessica, First Apartment</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Problem Categories</h3>
+                    <p><a href="#problems">Plumbing</a></p>
+                    <p><a href="#problems">Car Troubles</a></p>
+                    <p><a href="#problems">Kitchen Repairs</a></p>
+                    <p><a href="#problems">Tech Issues</a></p>
+                </div>
+                <div class="footer-section">
+                    <h3>For Students</h3>
+                    <p><a href="#">Budget Repair Tips</a></p>
+                    <p><a href="#">Apartment Living Guide</a></p>
+                    <p><a href="#">Emergency Contacts</a></p>
+                    <p><a href="#">Safety Guidelines</a></p>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <p><a href="#">Help Center</a></p>
+                    <p><a href="#">Contact Us</a></p>
+                    <p><a href="#">Report an Issue</a></p>
+                    <p><a href="#">Feedback</a></p>
+                </div>
+                <div class="footer-section">
+                    <h3>Company</h3>
+                    <p><a href="#">About QuickFixU</a></p>
+                    <p><a href="#">Privacy Policy</a></p>
+                    <p><a href="#">Terms of Service</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 QuickFixU. Helping students become independent, one repair at a time.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Chat Button -->
+    <button class="floating-chat-button" onclick="openChatbot()" title="Get Help Now!"></button>
+
+    <script>
+        console.log('🚀 QuickFixU Starting...');
+
+        // 🔧 SUPABASE CONFIGURATION
+        const SUPABASE_URL = 'https://ceanatdeztoouocesymwf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlYW5hdGRlenRvdW9jZXN5bXdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxODk4NjQsImV4cCI6MjA2ODc2
